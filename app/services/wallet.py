@@ -50,29 +50,44 @@ async def get_user_balance(user_id: int, db: AsyncSession):
 
 async def add_money_to_wallet(user_id: int, amount: float, description: str, db: AsyncSession):
     """Add money to user's wallet and create a credit transaction"""
+    print(f"DEBUG: add_money_to_wallet called with user_id={user_id}, amount={amount}, description={description}")
+
     user = await get_user_by_id(user_id, db)
+    print(f"DEBUG: Retrieved user: {user}")
     if not user:
+        print("DEBUG: User not found")
         return None
 
-    # Update user balance directly
-    user.balance = float(user.balance) + amount
-
     try:
-        await db.commit()
-        await db.refresh(user)
+        print(f"DEBUG: Current user balance: {user.balance}")
+        # Update user balance directly
+        user.balance = float(user.balance) + amount
+        print(f"DEBUG: New user balance: {user.balance}")
 
-        # Create transaction record
-        transaction = TransactionCreate(
+        # Create transaction record directly without using create_transaction service
+        from app.models.transactions import Transactions
+        db_transaction = Transactions(
             user_id=user_id,
             transaction_type="CREDIT",
             amount=amount,
             description=description
         )
-        await create_transaction(transaction, db)
+        print(f"DEBUG: Created transaction object: {db_transaction}")
+
+        db.add(db_transaction)
+        print("DEBUG: Added transaction to session")
+        await db.commit()
+        print("DEBUG: Committed transaction")
+        await db.refresh(user)
+        await db.refresh(db_transaction)
+        print("DEBUG: Refreshed objects")
 
         return float(user.balance)
-    except Exception:
+    except Exception as e:
         await db.rollback()
+        print(f"ERROR in add_money_to_wallet: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 async def withdraw_money_from_wallet(user_id: int, amount: float, description: str, db: AsyncSession):
@@ -85,23 +100,26 @@ async def withdraw_money_from_wallet(user_id: int, amount: float, description: s
     if float(user.balance) < amount:
         return None
 
-    # Update user balance directly
-    user.balance = float(user.balance) - amount
-
     try:
-        await db.commit()
-        await db.refresh(user)
+        # Update user balance directly
+        user.balance = float(user.balance) - amount
 
-        # Create transaction record
-        transaction = TransactionCreate(
+        # Create transaction record directly without using create_transaction service
+        from app.models.transactions import Transactions
+        db_transaction = Transactions(
             user_id=user_id,
             transaction_type="DEBIT",
             amount=amount,
             description=description
         )
-        await create_transaction(transaction, db)
+
+        db.add(db_transaction)
+        await db.commit()
+        await db.refresh(user)
+        await db.refresh(db_transaction)
 
         return float(user.balance)
-    except Exception:
+    except Exception as e:
         await db.rollback()
+        print(f"Error in withdraw_money_from_wallet: {e}")
         return None
