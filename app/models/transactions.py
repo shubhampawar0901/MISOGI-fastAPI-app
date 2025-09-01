@@ -22,15 +22,15 @@ class Transactions(Base):
     __tablename__ = "transactions"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    transaction_type = Column(String(20))
-    amount = Column(DECIMAL(10, 2))
-    description = Column(Text)
-    # reference_transaction_id = Column(Integer, ForeignKey("transactions.id"))
-    # recipient_user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    transaction_type = Column(String(20), nullable=False)
+    amount = Column(DECIMAL(10, 2), nullable=False)
+    description = Column(Text, nullable=True)
+    reference_transaction_id = Column(Integer, nullable=True)
+    recipient_user_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     #Relationships
-    user = relationship("Users", back_populates="transactions")
+    user = relationship("Users", back_populates="transactions", foreign_keys=[user_id])
     # reference_transaction = relationship("Transactions", foreign_keys=[reference_transaction_id], back_populates="transactions")

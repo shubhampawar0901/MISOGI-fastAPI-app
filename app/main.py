@@ -13,6 +13,7 @@ app.include_router(users_router)
 app.include_router(transactions_router)
 app.include_router(wallet_router)
 
+
 #Health API
 @app.get("/health", tags=["Health"])
 async def health():
