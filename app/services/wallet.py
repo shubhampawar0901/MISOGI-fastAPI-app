@@ -40,31 +40,68 @@ from app.schemas.transactions import TransactionBase, TransactionRead, Transacti
 from sqlalchemy import select
 
 async def get_user_balance(user_id: int, db: AsyncSession):
+    """Get user balance by user ID"""
     stmt = select(Users).where(Users.id == user_id)
     result = await db.execute(stmt)
-    user = result.fetchone()
+    user = result.scalar_one_or_none()  # Fix: use scalar_one_or_none instead of fetchone
     if not user:
         return None
-    return user.balance
+    return float(user.balance)
 
 async def add_money_to_wallet(user_id: int, amount: float, description: str, db: AsyncSession):
+    """Add money to user's wallet and create a credit transaction"""
     user = await get_user_by_id(user_id, db)
     if not user:
         return None
-    user.balance += amount
-    await update_user(user_id, user, db)
-    transaction = TransactionCreate(user_id=user_id, transaction_type="CREDIT", amount=amount, description=description)
-    await create_transaction(transaction, db)
-    return user.balance
+
+    # Update user balance directly
+    user.balance = float(user.balance) + amount
+
+    try:
+        await db.commit()
+        await db.refresh(user)
+
+        # Create transaction record
+        transaction = TransactionCreate(
+            user_id=user_id,
+            transaction_type="CREDIT",
+            amount=amount,
+            description=description
+        )
+        await create_transaction(transaction, db)
+
+        return float(user.balance)
+    except Exception:
+        await db.rollback()
+        return None
 
 async def withdraw_money_from_wallet(user_id: int, amount: float, description: str, db: AsyncSession):
+    """Withdraw money from user's wallet and create a debit transaction"""
     user = await get_user_by_id(user_id, db)
     if not user:
         return None
-    if user.balance < amount:
+
+    # Check if user has sufficient balance
+    if float(user.balance) < amount:
         return None
-    user.balance -= amount
-    await update_user(user_id, user, db)
-    transaction = TransactionCreate(user_id=user_id, transaction_type="DEBIT", amount=amount, description=description)
-    await create_transaction(transaction, db)
-    return user.balance
+
+    # Update user balance directly
+    user.balance = float(user.balance) - amount
+
+    try:
+        await db.commit()
+        await db.refresh(user)
+
+        # Create transaction record
+        transaction = TransactionCreate(
+            user_id=user_id,
+            transaction_type="DEBIT",
+            amount=amount,
+            description=description
+        )
+        await create_transaction(transaction, db)
+
+        return float(user.balance)
+    except Exception:
+        await db.rollback()
+        return None
