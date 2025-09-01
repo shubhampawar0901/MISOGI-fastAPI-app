@@ -1,23 +1,5 @@
-"""
-This is model file for Users table 
-
--- Create Table
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(15),
-    balance DECIMAL(10,2) DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
-
-"""
-
-from sqlalchemy import Column, Integer, String, DateTime, DECIMAL, func, relationship
+from sqlalchemy import Column, Integer, String, DateTime, DECIMAL, func
+from sqlalchemy.orm import relationship
 from app.database.base import Base
 
 class Users(Base):

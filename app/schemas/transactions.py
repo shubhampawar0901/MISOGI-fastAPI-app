@@ -125,7 +125,7 @@ class TransactionRead(TransactionBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TransactionUpdate(TransactionBase):
     pass
@@ -134,5 +134,5 @@ class TransactionDelete(BaseModel):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 

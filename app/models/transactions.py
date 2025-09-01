@@ -14,7 +14,8 @@ CREATE TABLE transactions (
 
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, DECIMAL, ForeignKey, Text, func, relationship
+from sqlalchemy import Column, Integer, String, DateTime, DECIMAL, ForeignKey, Text, func
+from sqlalchemy.orm import relationship
 from app.database.base import Base
 
 class Transactions(Base):
@@ -25,12 +26,11 @@ class Transactions(Base):
     transaction_type = Column(String(20))
     amount = Column(DECIMAL(10, 2))
     description = Column(Text)
-    reference_transaction_id = Column(Integer, ForeignKey("transactions.id"))
-    recipient_user_id = Column(Integer, ForeignKey("users.id"))
+    # reference_transaction_id = Column(Integer, ForeignKey("transactions.id"))
+    # recipient_user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     #Relationships
     user = relationship("Users", back_populates="transactions")
-    reference_transaction = relationship("Transactions", remote_side=id, back_populates="transactions")
-    recipient_user = relationship("Users", back_populates="transactions")
+    # reference_transaction = relationship("Transactions", foreign_keys=[reference_transaction_id], back_populates="transactions")

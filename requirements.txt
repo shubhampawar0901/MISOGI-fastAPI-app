@@ -5,3 +5,4 @@ aiomysql
 python-multipart
 pydantic-settings
 python-dotenv
+pydantic[email]
